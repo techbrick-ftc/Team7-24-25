@@ -53,6 +53,15 @@ public class FieldCentricOmniBot {
         rightBackDrive.setPower(rightBackPower / largest);
     }
 
+    // Denominator is the largest motor power (absolute value) or 1
+    // This ensures all the powers maintain the same ratio,
+    // but only if at least one is out of the range [-1, 1]
+    /*double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
+    double frontLeftPower = (rotY + rotX + rx) / denominator;
+    double backLeftPower = (rotY - rotX + rx) / denominator;
+    double frontRightPower = (rotY - rotX - rx) / denominator;
+    double backRightPower = (rotY + rotX - rx) / denominator;*/
+
     public void setDrive(double forward, double right, double rotate) {
         double frontLeftPower = forward - rotate - right;//forward + right + rotate;
         double backLeftPower = forward - rotate + right;//forward - right + rotate;

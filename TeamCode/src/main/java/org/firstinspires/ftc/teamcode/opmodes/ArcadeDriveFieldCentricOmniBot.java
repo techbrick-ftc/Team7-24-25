@@ -18,8 +18,8 @@ public class ArcadeDriveFieldCentricOmniBot extends OpMode {
     //boolean robotCentric = false;
     IMU imu;
 
+    @Override
     public void init() {
-
         drive.init(hardwareMap);
         //robotCentric = false;
 
@@ -73,8 +73,8 @@ public class ArcadeDriveFieldCentricOmniBot extends OpMode {
         double right = gamepad1.left_stick_x;
         double rotate = -gamepad1.right_stick_x;
         //checkMode();
-        drive.setPowers(forward - rotate - right, forward - rotate + right, forward + rotate + right, forward + rotate - right);
-        drive.setDrive(forward, right, rotate);
+        //drive.setPowers(forward - rotate - right, forward - rotate + right, forward + rotate + right, forward + rotate - right);
+        //drive.setDrive(forward, right, rotate);
         telemetry.addData("Heading", drive.getHeading(AngleUnit.DEGREES));
         telemetry.addData("Left stick x", gamepad1.left_stick_x);
         //telemetry.addData("Robot centric", robotCentric);
