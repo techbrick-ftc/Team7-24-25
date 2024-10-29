@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -20,7 +21,10 @@ public class FieldCentricOmniBot {
         leftBackDrive = hardwareMap.get(DcMotor.class, "leftBackDrive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
+
         imu = hardwareMap.get(IMU.class, "imu");
+
+
 
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -34,6 +38,7 @@ public class FieldCentricOmniBot {
 
         imu.initialize(new IMU.Parameters(RevOrientation));
     }
+
 
     public double getHeading(AngleUnit angleUnit) {
         return imu.getRobotYawPitchRollAngles().getYaw(angleUnit);

@@ -48,6 +48,8 @@ public class DriveAndArmOpMode extends OpMode {
         imu.initialize(myIMUparameters);
     }
 
+
+
     private void checkMode() {
         telemetry.addData("Robot centric", robotCentric);
         if(gamepad1.a && !aAlreadyPressed) robotCentric = !robotCentric;
@@ -80,6 +82,17 @@ public class DriveAndArmOpMode extends OpMode {
         double rotate = -gamepad1.right_stick_x;
         double slider = gamepad2.left_stick_y;
         double armRotate = -gamepad2.right_stick_y;
+
+        if (gamepad2.right_bumper) {
+            drive.setClawServoPosition(1.0);
+        } else if (gamepad2.left_bumper) {
+            drive.setClawServoPosition(0.0);
+
+        }
+
+        telemetry.addData("controller 2 left bumper",gamepad2.left_bumper);
+        telemetry.addData("controller 2 right bumper",gamepad2.right_bumper);
+
 
         drive.setSliderSpeed(slider);
         drive.setRotateSpeed(armRotate);

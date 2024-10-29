@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -16,7 +17,12 @@ public class DriveAndArm {
     private IMU imu;
     private DcMotor armRotate;
     private DcMotor armSlider;
+    private Servo rightClawServo;
+    private Servo clawServo;
+    private Servo leftClawServo;
     private double ticksPerRotation;
+
+
 
     public void init(HardwareMap hardwareMap) {
         leftFrontDrive = hardwareMap.get(DcMotor.class, "leftFrontDrive");
@@ -26,6 +32,9 @@ public class DriveAndArm {
         imu = hardwareMap.get(IMU.class, "imu");
         armRotate = hardwareMap.get(DcMotor.class, "armRotate");
         armSlider = hardwareMap.get(DcMotor.class, "armSlider");
+        clawServo = hardwareMap.get(Servo.class, "clawServo");
+        leftClawServo = hardwareMap.get(Servo.class, "leftClawServo");
+        rightClawServo = hardwareMap.get(Servo.class, "rightClawServo");
 
 
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -49,6 +58,19 @@ public class DriveAndArm {
     public double getHeading(AngleUnit angleUnit) {
         return imu.getRobotYawPitchRollAngles().getYaw(angleUnit);
 
+    }
+
+
+    public void setClawServoPosition(double position) {
+        clawServo.setPosition(position);
+    }
+
+    public void setLeftClawServoPosition(double position) {
+        leftClawServo.setPosition(position);
+    }
+
+    public void setRightClawServoPosition(double position) {
+        rightClawServo.setPosition(position);
     }
 
     public void setPowers(double leftFrontPower, double leftBackPower, double rightFrontPower, double rightBackPower) {
