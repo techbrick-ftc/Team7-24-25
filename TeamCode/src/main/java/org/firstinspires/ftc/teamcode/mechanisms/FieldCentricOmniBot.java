@@ -14,6 +14,7 @@ public class FieldCentricOmniBot {
     private DcMotor leftBackDrive;
     private DcMotor rightFrontDrive;
     private DcMotor rightBackDrive;
+    private Servo clawServo;
     private IMU imu;
 
     public void init(HardwareMap hardwareMap) {
@@ -21,6 +22,7 @@ public class FieldCentricOmniBot {
         leftBackDrive = hardwareMap.get(DcMotor.class, "leftBackDrive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
+        clawServo = hardwareMap.get(Servo.class, "clawServo");
 
         imu = hardwareMap.get(IMU.class, "imu");
 
@@ -39,6 +41,9 @@ public class FieldCentricOmniBot {
         imu.initialize(new IMU.Parameters(RevOrientation));
     }
 
+    public void setClawServoPosition(double position) {
+        clawServo.setPosition(position);
+    }
 
     public double getHeading(AngleUnit angleUnit) {
         return imu.getRobotYawPitchRollAngles().getYaw(angleUnit);
