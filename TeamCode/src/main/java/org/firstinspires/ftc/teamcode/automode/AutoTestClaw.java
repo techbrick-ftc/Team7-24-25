@@ -4,12 +4,11 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.mechanisms.FieldCentricOmniBot;
-import org.firstinspires.ftc.teamcode.mechanisms.DriveAndArm;
 
 import java.util.concurrent.TimeUnit;
 
 @Autonomous()
-public class AutoTest1 extends OpMode {
+public class AutoTestClaw extends OpMode {
     FieldCentricOmniBot drive = new FieldCentricOmniBot();
     int state;
 
@@ -39,5 +38,6 @@ public class AutoTest1 extends OpMode {
                 throw new RuntimeException(e);
             }
             drive.setClawServoPosition(0.5);
+
     }
 }}
