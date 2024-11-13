@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.automode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.mechanisms.FieldCentricOmniBot;
@@ -9,18 +10,18 @@ import org.firstinspires.ftc.teamcode.mechanisms.DriveAndArm;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous()
-public class AutoTestDrive extends OpMode {
+public class AutoTestDrive extends LinearOpMode {
     FieldCentricOmniBot drive = new FieldCentricOmniBot();
     int state;
 
-    @Override
-    public void init() {
-        drive.init(hardwareMap);
-    }
+
 
     @Override
-    public void start() {
-        drive.setDrive(1, 0, 0);
+    public void runOpMode() throws InterruptedException  {
+        //Initializes Hardware map
+        drive.init(hardwareMap);
+        //Starts driving for one second
+        drive.setDrive(1, 0, 0.2);
             try {
                     TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {
@@ -47,10 +48,7 @@ public class AutoTestDrive extends OpMode {
                     drive.setClawServoPosition(0.5);
     }
 
-    @Override
-    public void loop() {
 
-    }
 
 
 }
