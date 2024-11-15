@@ -20,6 +20,7 @@ public class DriveAndArm {
     private Servo rightClawServo;
     private Servo clawServo;
     private Servo leftClawServo;
+    private DcMotor liftMotor;
     private double ticksPerRotation;
 
 
@@ -33,6 +34,7 @@ public class DriveAndArm {
         armRotate = hardwareMap.get(DcMotor.class, "armRotate");
         armSlider = hardwareMap.get(DcMotor.class, "armSlider");
         clawServo = hardwareMap.get(Servo.class, "clawServo");
+        liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
         leftClawServo = hardwareMap.get(Servo.class, "leftClawServo");
         rightClawServo = hardwareMap.get(Servo.class, "rightClawServo");
 
@@ -45,6 +47,7 @@ public class DriveAndArm {
         leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         armRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armRotate.setDirection(DcMotorSimple.Direction.REVERSE);
         ticksPerRotation = armRotate.getMotorType().getTicksPerRev();
         ticksPerRotation = armSlider.getMotorType().getTicksPerRev();
@@ -107,6 +110,7 @@ public class DriveAndArm {
     public void setRotateSpeed(double speed) {
         armRotate.setPower(speed);
     }
+
 
     public double getMotorRotations() {
         return armRotate.getCurrentPosition() / ticksPerRotation;
