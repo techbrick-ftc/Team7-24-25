@@ -89,7 +89,19 @@ public class DriveAndArmOpMode extends OpMode {
             drive.setClawServoPosition(0.0);
 
         }
-        
+
+        if (gamepad1.b) {
+            drive.setMotorSpeed(0.5);
+        } else {
+            drive.setMotorSpeed(0.0);
+        }
+
+        if (gamepad1.x) {
+            drive.setMotorSpeed(-0.5);
+        } else {
+            drive.setMotorSpeed(0.0);
+        }
+
 
 
         telemetry.addData("controller 2 left bumper",gamepad2.left_bumper);
