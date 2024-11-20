@@ -21,7 +21,7 @@ public class AutoTestDrive extends LinearOpMode {
         //Initializes Hardware map
         drive.init(hardwareMap);
         //Starts driving for one second
-        drive.setDrive(1, 0, 0.2);
+        drive.setDrive(1, 0, 0);
             try {
                     TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {

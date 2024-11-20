@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.mechanisms.FieldCentricOmniBot;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous()
-public class AutoTestDrive2 extends OpMode {
+public class AutoTestRotate extends OpMode {
     FieldCentricOmniBot drive = new FieldCentricOmniBot();
     int state;
 
@@ -25,25 +25,13 @@ public class AutoTestDrive2 extends OpMode {
     public void loop() {
         telemetry.addData("State", state);
         if (state == 0)  {
-            drive.setDrive(1, 0, 0.2);
+            drive.setDrive(0, 0, 0.5);
             try {
                 TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
             drive.setDrive(0, 0, 0);
-            try {
-                TimeUnit.SECONDS.sleep(2);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            drive.setClawServoPosition(0.83);
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            drive.setClawServoPosition(0);
             state = 1;
             telemetry.addData("Autonomous", "Finished");
         }
