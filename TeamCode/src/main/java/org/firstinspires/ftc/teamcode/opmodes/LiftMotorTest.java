@@ -22,6 +22,13 @@ public class LiftMotorTest extends OpMode {
         } else {
             drive.setMotorSpeed(0.0);
         }
+
+
+        if (gamepad1.y) {
+            drive.setMotorSpeed(-0.5);
+        } else {
+            drive.setMotorSpeed(0.0);
+        }
         telemetry.addData("Motor rotations", drive.getMotorRotations());
         telemetry.addData("Gamepad 1 B", gamepad1.b);
     }
