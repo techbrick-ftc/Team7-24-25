@@ -45,6 +45,7 @@ public class AutoTestDriveLinear extends LinearOpMode {
         throw new RuntimeException(e);
             }
                     drive.setClawServoPosition(0.5);
+        telemetry.addData("Autonomous", "Finished");
     }
 
 
