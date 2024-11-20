@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.mechanisms.DriveAndArm;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous()
-public class AutoTestDriveWorking extends OpMode {
+public class AutoTestDrive2 extends OpMode {
     DriveAndArm drive = new DriveAndArm();
     int state;
 

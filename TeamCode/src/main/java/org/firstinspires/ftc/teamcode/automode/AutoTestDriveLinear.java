@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.automode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 
 import org.firstinspires.ftc.teamcode.mechanisms.DriveAndArm;
@@ -10,7 +9,7 @@ import org.firstinspires.ftc.teamcode.mechanisms.DriveAndArm;
 import java.util.concurrent.TimeUnit;
 
 @Autonomous()
-public class AutoTestDrive extends LinearOpMode {
+public class AutoTestDriveLinear extends LinearOpMode {
     DriveAndArm drive = new DriveAndArm();
     int state;
 
