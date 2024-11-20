@@ -4,14 +4,14 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-import org.firstinspires.ftc.teamcode.mechanisms.FieldCentricOmniBot;
+
 import org.firstinspires.ftc.teamcode.mechanisms.DriveAndArm;
 
 import java.util.concurrent.TimeUnit;
 
 @Autonomous()
 public class AutoTestDrive extends LinearOpMode {
-    FieldCentricOmniBot drive = new FieldCentricOmniBot();
+    DriveAndArm drive = new DriveAndArm();
     int state;
 
 
