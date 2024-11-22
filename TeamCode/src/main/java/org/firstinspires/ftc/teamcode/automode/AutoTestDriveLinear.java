@@ -4,13 +4,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
-import org.firstinspires.ftc.teamcode.mechanisms.DriveAndArm;
+import org.firstinspires.ftc.teamcode.mechanisms.AutoConfig;
 
 import java.util.concurrent.TimeUnit;
 
 @Autonomous()
 public class AutoTestDriveLinear extends LinearOpMode {
-    DriveAndArm drive = new DriveAndArm();
+    AutoConfig drive = new AutoConfig();
     int state;
 
 

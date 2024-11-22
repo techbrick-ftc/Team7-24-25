@@ -3,13 +3,13 @@ package org.firstinspires.ftc.teamcode.automode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-import org.firstinspires.ftc.teamcode.mechanisms.DriveAndArm;
+import org.firstinspires.ftc.teamcode.mechanisms.AutoConfig;
 
 import java.util.concurrent.TimeUnit;
 
 @Autonomous()
 public class AutoTestRotate extends OpMode {
-    DriveAndArm drive = new DriveAndArm();
+    AutoConfig drive = new AutoConfig();
     int state;
 
     @Override
