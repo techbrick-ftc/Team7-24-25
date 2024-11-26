@@ -17,20 +17,13 @@ public class PotTestOpMode extends OpMode {
 
     @Override
     public void loop() {
-        double motorTowersdgf = gamepad2.right_stick_y;
 
-        telemetry.addData("Pot Angle", drive.getPotAngle());
+        telemetry.addData("Pot Angle", drive.armPot.getVoltage());
         telemetry.addData("Right stick x", gamepad2.right_stick_x);
         telemetry.addData("Right stick y", gamepad2.right_stick_y);
         telemetry.addData("A button", gamepad2.a);
         telemetry.addData("B button", gamepad2.b);
         telemetry.addData("X button", gamepad2.x);
         telemetry.addData("Y button", gamepad2.y);
-
-        drive.setRotateSpeed(motorTowersdgf);
-
-        if (drive.getPotAngle() > 90) {
-            state = 3;
-        }
     }
 }

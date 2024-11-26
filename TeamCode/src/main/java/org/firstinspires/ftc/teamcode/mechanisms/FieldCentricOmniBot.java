@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -14,7 +13,7 @@ public class FieldCentricOmniBot {
     private DcMotor leftBackDrive;
     private DcMotor rightFrontDrive;
     private DcMotor rightBackDrive;
-    private Servo clawServo;
+    private DcMotor motorTowersdgf;
     private IMU imu;
 
     public void init(HardwareMap hardwareMap) {
@@ -22,16 +21,14 @@ public class FieldCentricOmniBot {
         leftBackDrive = hardwareMap.get(DcMotor.class, "leftBackDrive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
-        clawServo = hardwareMap.get(Servo.class, "clawServo");
-
+        motorTowersdgf = hardwareMap.get(DcMotor.class, "motorTowersdgf");
         imu = hardwareMap.get(IMU.class, "imu");
-
-
 
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motorTowersdgf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftFrontDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -39,10 +36,6 @@ public class FieldCentricOmniBot {
                 new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,RevHubOrientationOnRobot.UsbFacingDirection.FORWARD);
 
         imu.initialize(new IMU.Parameters(RevOrientation));
-    }
-
-    public void setClawServoPosition(double position) {
-        clawServo.setPosition(position);
     }
 
     public double getHeading(AngleUnit angleUnit) {
@@ -62,15 +55,6 @@ public class FieldCentricOmniBot {
         rightFrontDrive.setPower(rightFrontPower / largest);
         rightBackDrive.setPower(rightBackPower / largest);
     }
-
-    // Denominator is the largest motor power (absolute value) or 1
-    // This ensures all the powers maintain the same ratio,
-    // but only if at least one is out of the range [-1, 1]
-    /*double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
-    double frontLeftPower = (rotY + rotX + rx) / denominator;
-    double backLeftPower = (rotY - rotX + rx) / denominator;
-    double frontRightPower = (rotY - rotX - rx) / denominator;
-    double backRightPower = (rotY + rotX - rx) / denominator;*/
 
     public void setDrive(double forward, double right, double rotate) {
         double frontLeftPower = forward - rotate - right;//forward + right + rotate;

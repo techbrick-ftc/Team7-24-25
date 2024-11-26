@@ -19,7 +19,7 @@ public class ArcadeDriveOmniBotAllMotor extends OpMode {
     @Override
     public void loop() {
         double forward = -gamepad1.left_stick_y;
-        double right = gamepad1.left_stick_x;
+        double right = -gamepad1.left_stick_x;
         double rotate = -gamepad1.right_stick_x;
 
         drive.setPowers(forward - rotate - right, forward - rotate + right, forward + rotate + right, forward + rotate - right);

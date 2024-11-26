@@ -6,27 +6,27 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.teamcode.mechanisms.FieldCentricOmniBot;
 
 @TeleOp()
 public class ArcadeDriveFieldCentricOmniBot extends OpMode {
     FieldCentricOmniBot drive = new FieldCentricOmniBot();
-    //boolean aAlreadyPressed = false;
-    //boolean robotCentric = false;
+    boolean aAlreadyPressed = false;
+    boolean robotCentric = false;
     IMU imu;
 
-    @Override
     public void init() {
+
         drive.init(hardwareMap);
-        //robotCentric = false;
+        robotCentric = false;
 
         imu = hardwareMap.get(IMU.class, "imu");
-        RevHubOrientationOnRobot revHubOrientationOnRobot = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,RevHubOrientationOnRobot.UsbFacingDirection.FORWARD);
+        //RevHubOrientationOnRobot revHubOrientationOnRobot = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,RevHubOrientationOnRobot.UsbFacingDirection.LEFT);
 
-        imu.initialize(new IMU.Parameters(revHubOrientationOnRobot));
+        //imu.initialize(new IMU.Parameters(revHubOrientationOnRobot));
 
         //used for omni bot because control hub (imu) is at -45 to Y axis and + 45 to X axis
         IMU.Parameters myIMUparameters;
@@ -38,19 +38,24 @@ public class ArcadeDriveFieldCentricOmniBot extends OpMode {
                                 AxesOrder.ZYX,
                                 AngleUnit.DEGREES,
                                 0,
-                                -45,
-                                +45,
+                                +90,
+                                0,
                                 0  // acquisitionTime, not used
                         )
                 )
         );
+        imu.initialize(myIMUparameters);
     }
 
-    /*private void checkMode() {
-        //telemetry.addData("Robot centric", robotCentric);
+    private void checkMode() {
+        telemetry.addData("Robot centric", robotCentric);
         if(gamepad1.a && !aAlreadyPressed) robotCentric = !robotCentric;
         aAlreadyPressed = gamepad1.a;
-    }*/
+    }
+
+    private void robotCentricDrive(double forward, double right, double rotate) {
+        drive.setDrive(forward, right, rotate);
+    }
 
     private void fieldCentricDrive(double forward, double right, double rotate) {
         double robotAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
@@ -70,15 +75,20 @@ public class ArcadeDriveFieldCentricOmniBot extends OpMode {
     @Override
     public void loop() {
         double forward = -gamepad1.left_stick_y;
-        double right = gamepad1.left_stick_x;
-        double rotate = -gamepad1.right_stick_x;
-        //checkMode();
+        double right = -gamepad1.left_stick_x;
+        double rotate = gamepad1.right_stick_x;
+        checkMode();
         //drive.setPowers(forward - rotate - right, forward - rotate + right, forward + rotate + right, forward + rotate - right);
         //drive.setDrive(forward, right, rotate);
         telemetry.addData("Heading", drive.getHeading(AngleUnit.DEGREES));
         telemetry.addData("Left stick x", gamepad1.left_stick_x);
-        //telemetry.addData("Robot centric", robotCentric);
+        telemetry.addData("Robot centric", robotCentric);
 
-        fieldCentricDrive(forward,right,rotate);
+        if (robotCentric) {
+            robotCentricDrive(forward, right, rotate);
+        }
+        else {
+            fieldCentricDrive(forward, right, rotate);
+        }
     }
 }

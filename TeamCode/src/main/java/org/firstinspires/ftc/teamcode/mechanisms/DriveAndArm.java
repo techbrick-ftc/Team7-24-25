@@ -15,15 +15,12 @@ public class DriveAndArm {
     private DcMotor rightFrontDrive;
     private DcMotor rightBackDrive;
     private IMU imu;
-    private DcMotor armRotate;
-    private DcMotor armSlider;
-    private Servo rightClawServo;
+    public DcMotor armRotate;
+    public DcMotor armSlider;
     private Servo clawServo;
-    private Servo leftClawServo;
-    private DcMotor liftMotor;
+    private Servo rightWristServo;
+    private Servo leftWristServo;
     private double ticksPerRotation;
-
-
 
     public void init(HardwareMap hardwareMap) {
         leftFrontDrive = hardwareMap.get(DcMotor.class, "leftFrontDrive");
@@ -34,9 +31,8 @@ public class DriveAndArm {
         armRotate = hardwareMap.get(DcMotor.class, "armRotate");
         armSlider = hardwareMap.get(DcMotor.class, "armSlider");
         clawServo = hardwareMap.get(Servo.class, "clawServo");
-        liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
-        leftClawServo = hardwareMap.get(Servo.class, "leftClawServo");
-        rightClawServo = hardwareMap.get(Servo.class, "rightClawServo");
+        rightWristServo = hardwareMap.get(Servo.class, "rightWristServo");
+        leftWristServo = hardwareMap.get(Servo.class, "leftWristServo");
 
 
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -47,7 +43,6 @@ public class DriveAndArm {
         leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         armRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armRotate.setDirection(DcMotorSimple.Direction.REVERSE);
         ticksPerRotation = armRotate.getMotorType().getTicksPerRev();
         ticksPerRotation = armSlider.getMotorType().getTicksPerRev();
@@ -63,21 +58,8 @@ public class DriveAndArm {
 
     }
 
-
-    public void setClawServoPosition(double position) {
-        clawServo.setPosition(position);
-    }
-
-    public void setLeftClawServoPosition(double position) {
-        leftClawServo.setPosition(position);
-    }
-
-    public void setRightClawServoPosition(double position) {
-        rightClawServo.setPosition(position);
-    }
-
     public void setPowers(double leftFrontPower, double leftBackPower, double rightFrontPower, double rightBackPower) {
-        double largest = 1.0;
+        double largest = 0.5;
         largest = Math.max(largest, Math.abs(leftFrontPower));
         largest = Math.max(largest, Math.abs(leftBackPower));
         largest = Math.max(largest, Math.abs(rightFrontPower));
@@ -104,15 +86,41 @@ public class DriveAndArm {
     }
 
     public void setSliderSpeed(double speed) {
-        armSlider.setPower(speed);
+        double armSliderSpeedMax = 0.5;
+        armSlider.setPower(speed * armSliderSpeedMax);
     }
 
     public void setRotateSpeed(double speed) {
-        armRotate.setPower(speed);
+        double armRotateSpeedMax = 0.5;
+        armRotate.setPower(speed * armRotateSpeedMax);
     }
-
 
     public double getMotorRotations() {
         return armRotate.getCurrentPosition() / ticksPerRotation;
+    }
+    public void setClawServoPosition(double position) {
+        clawServo.setPosition(position);
+    }
+
+    public void setRightWristServoPosition(double position) {
+        rightWristServo.setPosition(position);
+    }
+
+    public void setLeftWristServoPosition(double position) {
+        leftWristServo.setPosition(position);
+    }
+
+    public double getRightWristServoPosition() {
+        return rightWristServo.getPosition();
+    }
+
+    public double getLeftWristServoPosition() { return leftWristServo.getPosition(); }
+
+    public Servo.Direction getRightWristServoDirection() {
+        return rightWristServo.getDirection();
+    }
+
+    public Servo.Direction getLeftWristServoDirection() {
+        return leftWristServo.getDirection();
     }
 }

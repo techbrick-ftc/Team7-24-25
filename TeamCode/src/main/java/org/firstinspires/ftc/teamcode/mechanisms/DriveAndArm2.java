@@ -20,12 +20,15 @@ public class DriveAndArm2 {
     private DcMotor rightBackDrive;
     private IMU imu;
     public DcMotorEx armRotate;
-    public DcMotor armSlider;
+    public DcMotorEx armSlider;
     public DcMotor liftMotor;
     private Servo clawServo;
     private Servo rightWristServo;
     private Servo leftWristServo;
-    public AnalogInput armPot;
+    public AnalogInput armPot0;
+    public AnalogInput armPot1;
+    public AnalogInput sliderPot2;
+    public AnalogInput sliderPot3;
     private double ticksPerRotation;
     //private double ticksPerRotation1;
     //private double ticksPerRotation2;
@@ -52,15 +55,17 @@ public class DriveAndArm2 {
         leftBackDrive = hardwareMap.get(DcMotor.class, "leftBackDrive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
-        imu = hardwareMap.get(IMU.class, "imu");
+        //imu = hardwareMap.get(IMU.class, "imu");
         armRotate = hardwareMap.get(DcMotorEx.class, "armRotate");
-        armSlider = hardwareMap.get(DcMotor.class, "armSlider");
+        armSlider = hardwareMap.get(DcMotorEx.class, "armSlider");
         liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
         clawServo = hardwareMap.get(Servo.class, "clawServo");
         rightWristServo = hardwareMap.get(Servo.class, "rightWristServo");
         leftWristServo = hardwareMap.get(Servo.class, "leftWristServo");
-        armPot = hardwareMap.get(AnalogInput.class, "armPot");
-
+        armPot0 = hardwareMap.get(AnalogInput.class, "armPot0");
+        armPot1 = hardwareMap.get(AnalogInput.class, "armPot1");
+        sliderPot2 = hardwareMap.get(AnalogInput.class, "sliderPot2");
+        sliderPot3 = hardwareMap.get(AnalogInput.class, "sliderPot3");
 
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -72,28 +77,86 @@ public class DriveAndArm2 {
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftFrontDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        armRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armRotate.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        armSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armSlider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armRotate.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        armRotate.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        armSlider.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        armSlider.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armRotate.setDirection(DcMotorSimple.Direction.REVERSE);
+        armRotate.setDirection(DcMotorEx.Direction.REVERSE);
 
         /*ticksPerRotation1 = armRotate.getMotorType().getTicksPerRev();
         ticksPerRotation2 = armSlider.getMotorType().getTicksPerRev();
         ticksPerRotation3 = liftMotor.getMotorType().getTicksPerRev();*/
-
+        imu = hardwareMap.get(IMU.class, "imu");
         RevHubOrientationOnRobot RevOrientation =
-                new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD);
+                //new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD);
+                new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.LEFT);
 
         imu.initialize(new IMU.Parameters(RevOrientation));
     }
 
-    /*public void setArmPosition(int armPosition){
-        armRotate.setTargetPosition(armPosition);
-        armRotate.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armRotate.setVelocity(armVel);
-    }*/
+    public double setArmPosition(int armPosition, double currentPosition){
+        double armPositionMin = 2.165;
+        double armPositionMax = 2.105;
+        double maxLimit = Math.max(armPositionMin,armPositionMax);
+        double minLimit = Math.min(armPositionMin,armPositionMax);
+        double maxPower = 0.10;
+        double maxRate  = 1.0;
+        double delta = armPositionMax-armPositionMin;
+        double targetArmPosition = armPositionMin;
+        //if (armPosition == 0) targetArmPosition = armPositionMin;
+        if (armPosition == 1) targetArmPosition = 2.126;//armPositionMin + 0.25*delta;
+        if (armPosition == 2) targetArmPosition = 2.110;//armPositionMin + 0.50*delta;
+        if (armPosition == 3) targetArmPosition = armPositionMin + 0.75*delta;
+        if (armPosition == 4) targetArmPosition = armPositionMin + delta;
+        maxPower = (currentPosition > targetArmPosition) ? 0.3 : 0.1;
+        maxRate  = (currentPosition > targetArmPosition) ? 0.2 : 0.1;
+        // first number power for moving arm up (need more power)
+        // second number power for moving arm down (need less power) <-- gravity assist
+        double armPower =-maxPower*Math.tanh((currentPosition-targetArmPosition)*50/delta);
+        double positionError = Math.abs((currentPosition-targetArmPosition)*100/delta);
+        if (positionError < 1){
+            armRotate.setPower(0.0);
+            return(0.0);
+        }
+        if ((currentPosition < maxLimit) && (currentPosition > minLimit)) {
+            //armRotate.setVelocity(maxRate);
+            armRotate.setPower(armPower);
+        }
+        return (armPower);
+    }
+
+    public double setSliderPosition(int sliderPosition, double currentPosition){
+        double sliderPositionMin = 2.442; // slider all the way in
+        double sliderPositionMax = 1.2; // high bucket limit (fully extended)
+        double maxLimit = Math.max(sliderPositionMin,sliderPositionMax);
+        double minLimit = Math.min(sliderPositionMin,sliderPositionMax);
+        double maxPower = 0.10;
+        double maxRate  = 1;
+        double delta = sliderPositionMax-sliderPositionMin;
+        double targetSliderPosition = sliderPositionMin;
+        //if (sliderPosition == 0) targetSliderPosition = SliderPositionMin;
+        if (sliderPosition == 1) targetSliderPosition = 1.8;//armPositionMin + 0.25*delta;
+        if (sliderPosition == 2) targetSliderPosition = 1.2;//armPositionMin + 0.50*delta;
+        if (sliderPosition == 3) targetSliderPosition = sliderPositionMin + 0.75*delta;
+        if (sliderPosition == 4) targetSliderPosition = sliderPositionMin + delta;
+        maxPower = (currentPosition > targetSliderPosition) ? 0.8 : 0.8;
+        maxRate  = (currentPosition > targetSliderPosition) ? 0.2 : 0.1;
+        double positionError = Math.abs((currentPosition-targetSliderPosition)*100/delta);
+        // first number power for moving arm up (need more power)
+        // second number power for moving arm down (need less power) <-- gravity assist
+        double sliderPower = maxPower*Math.tanh((currentPosition-targetSliderPosition)*50/delta);
+        if (positionError < 1){
+            armSlider.setPower(0.0);
+            return(0.0);
+        }
+        if ((currentPosition < maxLimit) && (currentPosition > minLimit)) {
+            //armSlider.setVelocity(maxRate);
+            armSlider.setPower(sliderPower);
+        }
+        return (sliderPower);
+    }
+
 
     public double getHeading(AngleUnit angleUnit) {
         return imu.getRobotYawPitchRollAngles().getYaw(angleUnit);
@@ -114,10 +177,10 @@ public class DriveAndArm2 {
     }
 
     public void setDrive(double forward, double right, double rotate) {
-        double frontLeftPower = forward - rotate - right; //forward + right + rotate;
+        double frontLeftPower = forward + rotate - right; //forward + right + rotate;
         double backLeftPower = forward - rotate + right; //forward - right + rotate;
         double frontRightPower = forward + rotate + right; //forward - right - rotate;
-        double backRightPower = forward + rotate - right; //forward + right - rotate;
+        double backRightPower = forward - rotate - right; //forward + right - rotate;
 
         setPowers(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
     }
@@ -127,14 +190,17 @@ public class DriveAndArm2 {
         armSlider.setPower(speed);
     }
 
-    public void setSliderSpeed(double speed) {
+    public double setSliderSpeed(double speed) {
         double armSliderSpeedMax = 1;
         armSlider.setPower(speed * armSliderSpeedMax);
+        return speed * armSliderSpeedMax;
     }
 
-    public void setRotateSpeed(double speed) {
-        double armRotateSpeedMax = 0.25;
+    public double setRotateSpeed(double speed) {
+        double armRotateSpeedMax = 0.10;
+        armRotateSpeedMax = (speed > 0.0) ? 0.5 : 0.2;
         armRotate.setPower(speed * armRotateSpeedMax);
+        return speed * armRotateSpeedMax;
     }
 
     public double getMotorRotations() {
@@ -167,7 +233,20 @@ public class DriveAndArm2 {
     public Servo.Direction getLeftWristServoDirection() {
         return leftWristServo.getDirection();
     }
-    public double getPotAngle() {
-        return Range.scale(armPot.getVoltage(), 0, armPot.getMaxVoltage(), 0, 90);
+
+    public double getArmPotAngle0() {
+        return Range.scale(armPot0.getVoltage(), 0, armPot0.getMaxVoltage(), 0, 270);
+    }
+
+    public double getArmPotAngle1() {
+        return Range.scale(armPot1.getVoltage(), 0, armPot1.getMaxVoltage(), 0, 270);
+    }
+
+    public double getSliderPotAngle2() {
+        return Range.scale(sliderPot2.getVoltage(), 0, sliderPot2.getMaxVoltage(), 0, 270);
+    }
+
+    public double getSliderPotAngle3() {
+        return Range.scale(sliderPot3.getVoltage(), 0, sliderPot3.getMaxVoltage(), 0, 270);
     }
 }
