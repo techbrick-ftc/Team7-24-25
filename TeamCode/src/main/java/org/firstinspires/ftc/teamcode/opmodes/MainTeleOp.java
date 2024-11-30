@@ -1,13 +1,12 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.IMU;
-//import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-//import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -38,6 +37,10 @@ public class MainTeleOp  extends OpMode {
     boolean slowMode = false;
     IMU imu;
     public DcMotor liftMotor;
+    public AnalogInput armPot0;
+    public AnalogInput sliderPot2;
+    public DcMotorEx armRotate;
+    public DcMotorEx armSlider;
 
     public void init() {
 
@@ -198,6 +201,14 @@ public class MainTeleOp  extends OpMode {
         gp1aAlreadyPressed = gamepad1.a;
     }
 
+    public void lengthLimitCommands() {
+        double currentArmPosition = armRotate.getCurrentPosition();
+        if ((currentArmPosition >= 2.134) && (armSlider.getCurrentPosition() >= 1.173)) {
+            drive.setArmPosition(1, currentArmPosition);
+            armRotate.setPower(0.0);
+            armSlider.setPower(0.0);
+        }
+    }
 
     @Override
     public void loop() {
@@ -218,16 +229,6 @@ public class MainTeleOp  extends OpMode {
         else {
             liftMotor.setPower(0);
         }
-
-        /*if (slider != 0.0 && !(gp2dPadDownAlreadyPressed || gp2dPadUpAlreadyPressed)) {
-            drive.armSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            drive.setSliderSpeed(slider);
-        }
-       if (armRotate != 0.0 && !(gp1dPadDownAlreadyPressed || gp1dPadUpAlreadyPressed)) {
-            drive.armRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            drive.setRotateSpeed(armRotate);
-        }*/
-
 
         checkSliderMode();
         if (sliderManual) {
@@ -252,6 +253,7 @@ public class MainTeleOp  extends OpMode {
         //checkSliderPosition();
         telemetry.addData("Heading", drive.getHeading(AngleUnit.DEGREES));
         telemetry.addData("Right stick x gp 1", gamepad1.right_stick_x);
+        telemetry.addData("A button gp 2", gamepad2.a);
         /*telemetry.addData("Left stick x gp 1", gamepad1.left_stick_x);
         telemetry.addData("Left stick x gp2", gamepad2.left_stick_x);
         telemetry.addData("Left stick y gp1", gamepad1.left_stick_y);

@@ -103,8 +103,8 @@ public class DriveAndArmFinal {
         }
         if (drive.armPot0.getVoltage() < 2.105) { // arm stright up limit (~80 deg)
         }*/
-        double armPositionMin = 2.168;
-        double armPositionMax = 2.095;
+        double armPositionMin = 2.168; // arm up
+        double armPositionMax = 2.095; // arm down
         double maxLimit = Math.max(armPositionMin,armPositionMax);
         double minLimit = Math.min(armPositionMin,armPositionMax);
         double maxPower = 1.0;
@@ -145,8 +145,8 @@ public class DriveAndArmFinal {
         //if (sliderPosition == 0) targetSliderPosition = SliderPositionMin;
         if (sliderPosition == 1) targetSliderPosition = 1.85;//armPositionMin + 0.25*delta;
         if (sliderPosition == 2) targetSliderPosition = 1.2;//armPositionMin + 0.50*delta;
-        if (sliderPosition == 3) targetSliderPosition = sliderPositionMin + 0.50*delta;
-        if (sliderPosition == 4) targetSliderPosition = sliderPositionMin + 0.75*delta;
+        //if (sliderPosition == 3) targetSliderPosition = sliderPositionMin + 0.50*delta;
+        //if (sliderPosition == 4) targetSliderPosition = sliderPositionMin + 0.75*delta;
         maxPower = (currentPosition > targetSliderPosition) ? 1 : 1;
         maxRate  = (currentPosition > targetSliderPosition) ? 0.2 : 0.1;
         double positionError = Math.abs((currentPosition-targetSliderPosition)*100/delta);

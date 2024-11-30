@@ -36,6 +36,7 @@ public class AutoConfig {
     public double wristPositionMid = 0.5;
     public double wristPositionDown = 1;
     public ElapsedTime runtime = new ElapsedTime();
+    public AnalogInput sliderPot2;
     /*public int armPosition0 = 0;
     public int armPosition1 = -625;
     public int armPosition2 = -1250;
@@ -215,6 +216,37 @@ public class AutoConfig {
     public void setRotateSpeed(double speed) {
         double armRotateSpeedMax = 0.25;
         armRotate.setPower(speed * armRotateSpeedMax);
+    }
+
+    public double setSliderPosition(int sliderPosition, double currentPosition) {
+        double sliderPositionMin = 2.4; // slider all the way in
+        double sliderPositionMax = 1.2; // high bucket limit (fully extended)
+        double maxLimit = Math.max(sliderPositionMin, sliderPositionMax);
+        double minLimit = Math.min(sliderPositionMin, sliderPositionMax);
+        double maxPower = 0.10;
+        double maxRate = 1;
+        double delta = sliderPositionMax-sliderPositionMin;
+        double targetSliderPosition = sliderPositionMin;
+        //if (sliderPosition == 0) targetSliderPosition = SliderPositionMin;
+        if (sliderPosition == 1) targetSliderPosition = 1.85;//armPositionMin + 0.25*delta;
+        if (sliderPosition == 2) targetSliderPosition = 1.2;//armPositionMin + 0.50*delta;
+        //if (sliderPosition == 3) targetSliderPosition = sliderPositionMin + 0.50*delta;
+        //if (sliderPosition == 4) targetSliderPosition = sliderPositionMin + 0.75*delta;
+        maxPower = (currentPosition > targetSliderPosition) ? 1 : 1;
+        maxRate  = (currentPosition > targetSliderPosition) ? 0.2 : 0.1;
+        double positionError = Math.abs((currentPosition-targetSliderPosition)*100/delta);
+        // first number power for moving arm up (need more power)
+        // second number power for moving arm down (need less power) <-- gravity assist
+        double sliderPower = maxPower*Math.tanh((currentPosition-targetSliderPosition)*50/delta);
+        if (positionError < 1){
+            armSlider.setPower(0.0);
+            return(0.0);
+        }
+        if ((currentPosition < maxLimit) && (currentPosition > minLimit)) {
+            //armSlider.setVelocity(maxRate);
+            armSlider.setPower(sliderPower);
+        }
+        return (sliderPower);
     }
 
     public double getMotorRotations() {
