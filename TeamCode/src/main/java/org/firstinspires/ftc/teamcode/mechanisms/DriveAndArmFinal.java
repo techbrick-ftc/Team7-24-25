@@ -10,10 +10,11 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-public class DriveAndArm2 {
+public class DriveAndArmFinal {
     private DcMotor leftFrontDrive;
     private DcMotor leftBackDrive;
     private DcMotor rightFrontDrive;
@@ -79,10 +80,12 @@ public class DriveAndArm2 {
         leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         armRotate.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         armRotate.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        armRotate.setDirection(DcMotorEx.Direction.REVERSE);
         armSlider.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         armSlider.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armRotate.setDirection(DcMotorEx.Direction.REVERSE);
+        liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
         /*ticksPerRotation1 = armRotate.getMotorType().getTicksPerRev();
         ticksPerRotation2 = armSlider.getMotorType().getTicksPerRev();
@@ -95,27 +98,31 @@ public class DriveAndArm2 {
         imu.initialize(new IMU.Parameters(RevOrientation));
     }
 
-    public double setArmPosition(int armPosition, double currentPosition){
-        double armPositionMin = 2.165;
-        double armPositionMax = 2.105;
+    public double setArmPosition(int armPosition, double currentPosition) {
+       /* if (drive.armPot0.getVoltage() > 2.15) { // arm down limit (~0 deg)
+        }
+        if (drive.armPot0.getVoltage() < 2.105) { // arm stright up limit (~80 deg)
+        }*/
+        double armPositionMin = 2.168;
+        double armPositionMax = 2.095;
         double maxLimit = Math.max(armPositionMin,armPositionMax);
         double minLimit = Math.min(armPositionMin,armPositionMax);
-        double maxPower = 0.10;
+        double maxPower = 1.0;
         double maxRate  = 1.0;
         double delta = armPositionMax-armPositionMin;
         double targetArmPosition = armPositionMin;
         //if (armPosition == 0) targetArmPosition = armPositionMin;
-        if (armPosition == 1) targetArmPosition = 2.126;//armPositionMin + 0.25*delta;
-        if (armPosition == 2) targetArmPosition = 2.110;//armPositionMin + 0.50*delta;
-        if (armPosition == 3) targetArmPosition = armPositionMin + 0.75*delta;
-        if (armPosition == 4) targetArmPosition = armPositionMin + delta;
-        maxPower = (currentPosition > targetArmPosition) ? 0.3 : 0.1;
+        if (armPosition == 1) targetArmPosition = 2.15;//armPositionMin + 0.25*delta;
+        if (armPosition == 2) targetArmPosition = 2.13;//armPositionMin + 0.50*delta;
+        if (armPosition == 3) targetArmPosition = 2.12;//armPositionMin + 0.50*delta;
+        if (armPosition == 4) targetArmPosition = 2.095;//armPositionMin + 0.75*delta;
+        maxPower = (currentPosition > targetArmPosition) ? 1.0 : 1.0;
         maxRate  = (currentPosition > targetArmPosition) ? 0.2 : 0.1;
         // first number power for moving arm up (need more power)
         // second number power for moving arm down (need less power) <-- gravity assist
         double armPower =-maxPower*Math.tanh((currentPosition-targetArmPosition)*50/delta);
         double positionError = Math.abs((currentPosition-targetArmPosition)*100/delta);
-        if (positionError < 1){
+        if (positionError < 2){
             armRotate.setPower(0.0);
             return(0.0);
         }
@@ -127,7 +134,7 @@ public class DriveAndArm2 {
     }
 
     public double setSliderPosition(int sliderPosition, double currentPosition){
-        double sliderPositionMin = 2.442; // slider all the way in
+        double sliderPositionMin = 2.4; // slider all the way in
         double sliderPositionMax = 1.2; // high bucket limit (fully extended)
         double maxLimit = Math.max(sliderPositionMin,sliderPositionMax);
         double minLimit = Math.min(sliderPositionMin,sliderPositionMax);
@@ -136,11 +143,11 @@ public class DriveAndArm2 {
         double delta = sliderPositionMax-sliderPositionMin;
         double targetSliderPosition = sliderPositionMin;
         //if (sliderPosition == 0) targetSliderPosition = SliderPositionMin;
-        if (sliderPosition == 1) targetSliderPosition = 1.8;//armPositionMin + 0.25*delta;
+        if (sliderPosition == 1) targetSliderPosition = 1.85;//armPositionMin + 0.25*delta;
         if (sliderPosition == 2) targetSliderPosition = 1.2;//armPositionMin + 0.50*delta;
-        if (sliderPosition == 3) targetSliderPosition = sliderPositionMin + 0.75*delta;
-        if (sliderPosition == 4) targetSliderPosition = sliderPositionMin + delta;
-        maxPower = (currentPosition > targetSliderPosition) ? 0.8 : 0.8;
+        if (sliderPosition == 3) targetSliderPosition = sliderPositionMin + 0.50*delta;
+        if (sliderPosition == 4) targetSliderPosition = sliderPositionMin + 0.75*delta;
+        maxPower = (currentPosition > targetSliderPosition) ? 1 : 1;
         maxRate  = (currentPosition > targetSliderPosition) ? 0.2 : 0.1;
         double positionError = Math.abs((currentPosition-targetSliderPosition)*100/delta);
         // first number power for moving arm up (need more power)
@@ -163,6 +170,10 @@ public class DriveAndArm2 {
 
     }
 
+    public void setLiftMotorSpeed (double speed) {
+        liftMotor.setPower(speed);
+    }
+
     public void setPowers(double leftFrontPower, double leftBackPower, double rightFrontPower, double rightBackPower) {
         double largest = 1;
         largest = Math.max(largest, Math.abs(leftFrontPower));
@@ -175,6 +186,7 @@ public class DriveAndArm2 {
         rightFrontDrive.setPower(rightFrontPower / largest);
         rightBackDrive.setPower(rightBackPower / largest);
     }
+
 
     public void setDrive(double forward, double right, double rotate) {
         double frontLeftPower = forward + rotate - right; //forward + right + rotate;

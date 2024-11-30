@@ -1,22 +1,22 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.IMU;
+//import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+//import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 
-import org.firstinspires.ftc.teamcode.mechanisms.DriveAndArm2;
+import org.firstinspires.ftc.teamcode.mechanisms.DriveAndArmFinal;
 
 @TeleOp()
-public class DriveAndArmOpMode2  extends OpMode {
-    DriveAndArm2 drive = new DriveAndArm2();
+public class MainTeleOp  extends OpMode {
+    DriveAndArmFinal drive = new DriveAndArmFinal();
+    boolean gp1yAlreadyPressed = false;
     boolean gp1aAlreadyPressed = false;
     boolean gp2xAlreadyPressed = false;
     boolean gp2yAlreadyPressed = false;
@@ -35,7 +35,9 @@ public class DriveAndArmOpMode2  extends OpMode {
     double sliderPower = 0;
     int sliderPosition = 0;
     boolean robotCentric = false;
+    boolean slowMode = false;
     IMU imu;
+    public DcMotor liftMotor;
 
     public void init() {
 
@@ -43,6 +45,7 @@ public class DriveAndArmOpMode2  extends OpMode {
         robotCentric = false;
 
         imu = hardwareMap.get(IMU.class, "imu");
+        liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
         //RevHubOrientationOnRobot revHubOrientationOnRobot = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,RevHubOrientationOnRobot.UsbFacingDirection.LEFT);
 
         //imu.initialize(new IMU.Parameters(revHubOrientationOnRobot));
@@ -73,7 +76,7 @@ public class DriveAndArmOpMode2  extends OpMode {
 
     private void checkArmPosition() {
         telemetry.addData("Arm position", armPosition);
-        int maxPosition = 1;
+        int maxPosition = 4;
         int minPosition = 0;
         double currentPosition = drive.armPot0.getVoltage();
         if(gamepad1.dpad_up && !gp1dPadUpAlreadyPressed) {
@@ -144,8 +147,8 @@ public class DriveAndArmOpMode2  extends OpMode {
 
     private void checkDriveMode() {
         telemetry.addData("Robot centric", robotCentric);
-        if(gamepad1.a && !gp1aAlreadyPressed) robotCentric = !robotCentric;
-        gp1aAlreadyPressed = gamepad1.a;
+        if(gamepad1.y && !gp1yAlreadyPressed) robotCentric = !robotCentric;
+        gp1yAlreadyPressed = gamepad1.y;
     }
 
     private void checkClawOpen() {
@@ -167,7 +170,9 @@ public class DriveAndArmOpMode2  extends OpMode {
     }
 
     private void robotCentricDrive(double forward, double right, double rotate) {
-        drive.setDrive(forward, right, rotate);
+        double slowFactor;
+        slowFactor = (slowMode) ? 0.2 : 1.0;
+        drive.setDrive(slowFactor*forward, slowFactor*right, slowFactor*rotate);
     }
 
     private void fieldCentricDrive(double forward, double right, double rotate) {
@@ -176,14 +181,23 @@ public class DriveAndArmOpMode2  extends OpMode {
         double theta = Math.atan2(forward, right);
         double r = Math.hypot(forward, right);
         //rotate angle
-        theta = AngleUnit.normalizeRadians(theta - robotAngle);
+        theta = AngleUnit.normalizeRadians(theta + robotAngle);
 
         //convert back to cartesian
         double newForward = r * Math.sin(theta);
         double newRight = r * Math.cos(theta);
-
-        drive.setDrive(newForward, newRight, rotate);
+        double slowFactor;
+        slowFactor = (slowMode) ? 0.2 : 1.0;
+        drive.setDrive(slowFactor*newForward, slowFactor*newRight, slowFactor*rotate);
+        //drive.setDrive(newForward, newRight, rotate);
     }
+
+    private void checkSlowMode() {
+        telemetry.addData("Slow mode", slowMode);
+        if (gamepad1.a && !gp1aAlreadyPressed)  slowMode = !slowMode;
+        gp1aAlreadyPressed = gamepad1.a;
+    }
+
 
     @Override
     public void loop() {
@@ -192,7 +206,18 @@ public class DriveAndArmOpMode2  extends OpMode {
         double rotate = gamepad1.right_stick_x;
         double slider = gamepad2.left_stick_y;
         double armRotate = -gamepad2.right_stick_y;
-        //double liftMotor = gamepad2.left_trigger;
+
+        if (gamepad2.left_bumper) { // go down
+            liftMotor.setPower(1);
+        }
+
+        else if (gamepad2.right_bumper) { // lift up
+            liftMotor.setPower(-1);
+        }
+
+        else {
+            liftMotor.setPower(0);
+        }
 
         /*if (slider != 0.0 && !(gp2dPadDownAlreadyPressed || gp2dPadUpAlreadyPressed)) {
             drive.armSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -222,6 +247,7 @@ public class DriveAndArmOpMode2  extends OpMode {
         checkDriveMode();
         checkWristUp();
         checkClawOpen();
+        checkSlowMode();
         //checkArmPosition();
         //checkSliderPosition();
         telemetry.addData("Heading", drive.getHeading(AngleUnit.DEGREES));
@@ -254,17 +280,15 @@ public class DriveAndArmOpMode2  extends OpMode {
         else {
             fieldCentricDrive(forward, right, rotate);
         }
-
-        if (drive.armPot0.getVoltage() > 2.15) { // arm down limit (~0 deg)
+/*
+        if (drive.armPot0.getVoltage() > 2.168) { // arm down limit (~0 deg)
         }
-
-        if (drive.armPot0.getVoltage() < 2.105) { // arm stright up limit (~80 deg)
+        if (drive.armPot0.getVoltage() < 2.095) { // arm stright up limit (~80 deg)
         }
-
         if (drive.sliderPot2.getVoltage() > 2.442) { // slider all the way in
         }
-
-        if (drive.sliderPot2.getVoltage() < 1.236) { // high bucket limit (fully extended)
+        if (drive.sliderPot2.getVoltage() < 1.2) { // high bucket limit (fully extended)
         }
+ */
     }
 }

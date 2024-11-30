@@ -1,0 +1,130 @@
+package org.firstinspires.ftc.teamcode.automode;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.IMU;
+//import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+//import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
+import org.firstinspires.ftc.teamcode.mechanisms.AutoConfig;
+
+@Autonomous()
+public class MainAuto extends OpMode{
+    AutoConfig autodrive = new AutoConfig();
+    int state;
+    int sliderPosition;
+    String stateOp;
+    boolean robotCentric = false;
+    //boolean slowMode = false;
+    double forward = 0.0;
+    double right = 0.0;
+    double rotate = 0.0;
+    double timeSec = 0.0;
+    double sliderPower;
+    double currentPosition;
+
+    @Override
+    public void init () {
+        autodrive.init(hardwareMap);
+        robotCentric = false;
+        autodrive.setClawServoPosition(autodrive.clawPositionClosed);
+    }
+
+    @Override
+    public void start() {
+        state = 0;
+    }
+
+    @Override
+    public void loop() {
+        telemetry.addData("Auto State: ",state);
+        autodrive.setClawServoPosition(autodrive.clawPositionClosed);
+        autodrive.setRightWristServoPosition(autodrive.wristPositionMid);
+        switch (state) {
+            case 0:
+                forward = 0.0; right = -1.0; rotate = 0.0;timeSec = 0.5;
+                stateOp = "--> "+autodrive.driveByTimeToString(forward,right,rotate,timeSec);
+                telemetry.addData("Auto State: %d "+stateOp,state);
+                telemetry.update();
+                autodrive.setDriveByTime(forward,right,rotate,timeSec);
+                state += 1;
+                break;
+            case 1:
+                forward = 1.0; right = 0.0; rotate = 0.0;timeSec = 1.0;
+                stateOp = "--> "+autodrive.driveByTimeToString(forward,right,rotate,timeSec);
+                telemetry.addData("Auto State: %d "+stateOp,state);
+                telemetry.update();
+                autodrive.setDriveByTime(forward,right,rotate,timeSec);
+                state += 1;
+                break;
+            case 2:
+                currentPosition = autodrive.sliderPot2.getVoltage();
+                sliderPosition = 3;
+                stateOp = "--> Mover slider forward to position "+sliderPosition;
+                telemetry.addData("Auto State: %d "+stateOp,state);
+                telemetry.update();
+                sliderPower = autodrive.setSliderPosition(sliderPosition, currentPosition);
+                if (sliderPower == 0) {
+                    state += 1;
+                }
+                break;
+            case 3:
+                currentPosition = autodrive.sliderPot2.getVoltage();
+                sliderPosition = 0;
+                stateOp = "--> Retracting slider to position "+sliderPosition;
+                telemetry.addData("Auto State: %d "+stateOp,state);
+                telemetry.update();
+                sliderPower = autodrive.setSliderPosition(sliderPosition, currentPosition);
+                if (sliderPower == 0) {
+                    state += 1;
+                }
+                break;
+            case 4:
+                forward = -1.0; right = 0.0; rotate = 0.0;timeSec = 0.5;
+                stateOp = "--> "+autodrive.driveByTimeToString(forward,right,rotate,timeSec);
+                telemetry.addData("Auto State: %d "+stateOp,state);
+                telemetry.update();
+                autodrive.setDriveByTime(forward,right,rotate,timeSec);
+                state += 1;
+                break;
+            case 5:
+                forward = 0.0; right = -1.0; rotate = 0.0;timeSec = 1.0;
+                stateOp = "--> "+autodrive.driveByTimeToString(forward,right,rotate,timeSec);
+                telemetry.addData("Auto State: %d "+stateOp,state);
+                telemetry.update();
+                autodrive.setDriveByTime(forward,right,rotate,timeSec);
+                state += 1;
+                break;
+            case 6:
+                forward = 1.0; right = 0.0; rotate = 0.0;timeSec = 0.5;
+                stateOp = "--> "+autodrive.driveByTimeToString(forward,right,rotate,timeSec);
+                telemetry.addData("Auto State: %d "+stateOp,state);
+                telemetry.update();
+                autodrive.setDriveByTime(forward,right,rotate,timeSec);
+                state += 1;
+                break;
+            case 7:
+                forward = 0.0; right = -1.0; rotate = 0.0;timeSec = 0.5;
+                stateOp = "--> "+autodrive.driveByTimeToString(forward,right,rotate,timeSec);
+                telemetry.addData("Auto State: %d "+stateOp,state);
+                telemetry.update();
+                autodrive.setDriveByTime(forward,right,rotate,timeSec);
+                state += 1;
+                break;
+            case 8:
+                forward = -1.0; right = 0.0; rotate = 0.0;timeSec = 2.0;
+                stateOp = "--> "+autodrive.driveByTimeToString(forward,right,rotate,timeSec);
+                telemetry.addData("Auto State: %d "+stateOp,state);
+                telemetry.update();
+                autodrive.setDriveByTime(forward,right,rotate,timeSec);
+                state += 1;
+                break;
+        }
+    }
+}
+}

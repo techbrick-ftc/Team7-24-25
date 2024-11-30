@@ -2,14 +2,15 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -34,6 +35,7 @@ public class AutoConfig {
     public double clawPositionClosed = 0.45;
     public double wristPositionMid = 0.5;
     public double wristPositionDown = 1;
+    public ElapsedTime runtime = new ElapsedTime();
     /*public int armPosition0 = 0;
     public int armPosition1 = -625;
     public int armPosition2 = -1250;
@@ -113,6 +115,62 @@ public class AutoConfig {
         rightBackDrive.setPower(rightBackPower / largest);
     }
 
+    public void encoderDrive(double forwardInch, double rightInch, double rotateDeg,double timeout) {
+        ticksPerRotation = (leftFrontDrive.getMotorType().getTicksPerRev()+
+                leftBackDrive.getMotorType().getTicksPerRev()+
+                rightFrontDrive.getMotorType().getTicksPerRev()+
+                rightBackDrive.getMotorType().getTicksPerRev())/4.0;
+
+        double wheelDiameterInch = 3.78; //3.78 in (96 mm) or 4.09 in (104 mm)
+        double wheelDistanceFromCenter = 8.00;
+        double ticksPerInch = ticksPerRotation/(wheelDiameterInch*Math.PI);
+        double ticksPerDeg  = ticksPerInch*(wheelDistanceFromCenter*2.0*Math.PI)/360.0;
+        double driveSpeed = 0.5;
+
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        int forwardTicks = (int)(ticksPerInch*forwardInch);
+        int rotateTicks = (int)(ticksPerDeg*rotateDeg);
+        int rightTicks = (int)(ticksPerInch*rightInch);
+
+        int leftFrontTicks = forwardTicks + rotateTicks - rightTicks; //forward + right + rotate;
+        int leftBackTicks = forwardTicks - rotateTicks + rightTicks; //forward - right + rotate;
+        int rightFrontTicks = forwardTicks + rotateTicks + rightTicks; //forward - right - rotate;
+        int rightBackTicks = forwardTicks - rotateTicks - rightTicks; //forward + right - rotate;
+
+        leftFrontDrive.setTargetPosition(leftFrontTicks);
+        leftBackDrive.setTargetPosition(leftBackTicks);
+        rightFrontDrive.setTargetPosition(rightFrontTicks);
+        rightBackDrive.setTargetPosition(rightBackTicks);
+
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        runtime.reset();
+        leftFrontDrive.setPower(Math.abs(driveSpeed));
+        rightFrontDrive.setPower(Math.abs(driveSpeed));
+        leftBackDrive.setPower(Math.abs(driveSpeed));
+        rightBackDrive.setPower(Math.abs(driveSpeed));
+        while ((runtime.seconds() < timeout) &&
+                (leftFrontDrive.isBusy() && leftBackDrive.isBusy()) && (rightFrontDrive.isBusy() && rightBackDrive.isBusy())) {
+
+        }
+        setDrive(0.0, 0.0, 0.0);
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
     public void setDrive(double forward, double right, double rotate) {
         double frontLeftPower = forward - rotate - right; //forward + right + rotate;
         double backLeftPower = forward - rotate + right; //forward - right + rotate;
@@ -120,6 +178,28 @@ public class AutoConfig {
         double backRightPower = forward + rotate - right; //forward + right - rotate;
 
         setPowers(frontLeftPower, frontRightPower, backLeftPower, backRightPower);
+    }
+
+    public String driveByTimeToString(double forward, double right, double rotate,double time) {
+        String forwardMessage = (forward > 0.0) ? " Moving Forward " : " Moving Backward ";
+        String rightMessage = (right > 0.0) ? " Moving Right " : " Moving Left ";
+        String rotateMessage = (rotate > 0.0) ? " Rotate Right " : " Rotate Left ";
+        String timeMessage = String.format(" (%2.1f Seconds)", new Object[]{time});
+        forwardMessage = (forward == 0.0) ? "" : forwardMessage;
+        rightMessage = (right == 0.0) ? "" : rightMessage;
+        rotateMessage = (rotate == 0.0) ? "" : rotateMessage;
+        timeMessage = (time == 0.0) ? "" : timeMessage;
+        return forwardMessage+rightMessage+rotateMessage+timeMessage;
+    }
+
+    public void setDriveByTime(double forward, double right, double rotate,double time) {
+        setDrive(forward, right, rotate);
+        runtime.reset();
+        while (runtime.seconds() < time) {
+            //telemetry.addData("setDriveByTime: Elapsed Time: %4.1f Seconds", runtime.seconds());
+            //telemetry.update();
+        }
+        setDrive(0.0, 0.0, 0.0); //stop the motors
     }
 
     public void setMotorSpeed(double speed) {
