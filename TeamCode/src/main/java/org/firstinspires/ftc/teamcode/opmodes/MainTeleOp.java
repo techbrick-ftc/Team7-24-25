@@ -201,14 +201,14 @@ public class MainTeleOp  extends OpMode {
         gp1aAlreadyPressed = gamepad1.a;
     }
 
-    public void lengthLimitCommands() {
+    /*public void lengthLimitCommands() {
         double currentArmPosition = armRotate.getCurrentPosition();
         if ((currentArmPosition >= 2.134) && (armSlider.getCurrentPosition() >= 1.173)) {
             drive.setArmPosition(1, currentArmPosition);
             armRotate.setPower(0.0);
             armSlider.setPower(0.0);
         }
-    }
+    }*/
 
     @Override
     public void loop() {

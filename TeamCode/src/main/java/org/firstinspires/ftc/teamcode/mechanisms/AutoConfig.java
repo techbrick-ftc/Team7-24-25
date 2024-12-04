@@ -21,18 +21,18 @@ public class AutoConfig {
     private DcMotor rightBackDrive;
     private IMU imu;
     public DcMotorEx armRotate;
-    public DcMotor armSlider;
+    public DcMotorEx armSlider;
     public DcMotor liftMotor;
     private Servo clawServo;
     private Servo rightWristServo;
     private Servo leftWristServo;
-    public AnalogInput armPot;
+    public AnalogInput armPot0;
     private double ticksPerRotation;
     //private double ticksPerRotation1;
     //private double ticksPerRotation2;
     //private double ticksPerRotation3;
-    public double clawPositionOpen = 0.83;
-    public double clawPositionClosed = 0.45;
+    public double clawPositionOpen = 0.45;//0.83;    // This is actually a close position
+    public double clawPositionClosed = 0.83;//0.45;  // This is open position
     public double wristPositionMid = 0.5;
     public double wristPositionDown = 1;
     public ElapsedTime runtime = new ElapsedTime();
@@ -57,12 +57,13 @@ public class AutoConfig {
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
         imu = hardwareMap.get(IMU.class, "imu");
         armRotate = hardwareMap.get(DcMotorEx.class, "armRotate");
-        armSlider = hardwareMap.get(DcMotor.class, "armSlider");
+        armSlider = hardwareMap.get(DcMotorEx.class, "armSlider");
         liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
         clawServo = hardwareMap.get(Servo.class, "clawServo");
         rightWristServo = hardwareMap.get(Servo.class, "rightWristServo");
         leftWristServo = hardwareMap.get(Servo.class, "leftWristServo");
-        armPot = hardwareMap.get(AnalogInput.class, "armPot");
+        armPot0 = hardwareMap.get(AnalogInput.class, "armPot0");
+        sliderPot2 = hardwareMap.get(AnalogInput.class, "sliderPot2");
 
 
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -116,17 +117,45 @@ public class AutoConfig {
         rightBackDrive.setPower(rightBackPower / largest);
     }
 
-    public void encoderDrive(double forwardInch, double rightInch, double rotateDeg,double timeout) {
-        ticksPerRotation = (leftFrontDrive.getMotorType().getTicksPerRev()+
+    public double[] encoderDriveCalibrated(double forwardInch, double rightInch, double rotateDeg){
+        double forwardInchNew, rightInchNew,rotateDegNew,timeNew;
+        double rightInchCalibrated1=-1.02*(11+1.0/8.0),rightForwardCalibrated1=(-1.0/2.0)*10,rightTime1=2.5;
+        double rightInchCalibrated2=(-12.75*0.8),rightForwardCalibrated2=7.0/8.0,rightTime2=2.5;
+        double rightTime = (rightInch > 0.0) ? rightTime1 : rightTime2;
+        double rightInchCalibrated = (rightInch < 0.0) ? rightInchCalibrated1 : rightInchCalibrated2;
+        double rightForwardCalibrated = (rightInch < 0.0) ? rightForwardCalibrated1 : rightForwardCalibrated2;
+
+        double forwardInchCalibrated=16*0.97,forwardTime=2.5;
+        rightInchNew = -rightInch;
+        forwardInchNew = forwardInch;
+        rotateDegNew = rotateDeg;
+        timeNew = Math.abs(rightTime*rightInch/rightInchCalibrated)+ Math.abs(forwardTime*forwardInch/forwardInchCalibrated);
+        double [] out;
+        out = encoderDrive(forwardInchNew,rightInchNew,rotateDegNew,timeNew);
+        return out;
+    }
+
+    public double[] encoderDrive(double forwardInch, double rightInch, double rotateDeg,double timeout) {
+        double[] out = new double[14];
+        ticksPerRotation = (int) (leftFrontDrive.getMotorType().getTicksPerRev()+
                 leftBackDrive.getMotorType().getTicksPerRev()+
                 rightFrontDrive.getMotorType().getTicksPerRev()+
                 rightBackDrive.getMotorType().getTicksPerRev())/4.0;
+        out[0] = (double) ticksPerRotation;
 
         double wheelDiameterInch = 3.78; //3.78 in (96 mm) or 4.09 in (104 mm)
-        double wheelDistanceFromCenter = 8.00;
+        double wheelDistanceFromCenter = 7.00;
         double ticksPerInch = ticksPerRotation/(wheelDiameterInch*Math.PI);
         double ticksPerDeg  = ticksPerInch*(wheelDistanceFromCenter*2.0*Math.PI)/360.0;
-        double driveSpeed = 0.5;
+        double driveSpeed = 0.1;
+
+        double rightTicksPerInch = 36.14742015;  //overriding the wheel ticksPerInch
+        double rightForwardOffsetPerInch = 0.0;  //31.62899263/12.0;
+        double forwardTicksPerInch = 36.14742015;  //overriding the wheel ticksPerInch
+        double forwardRightOffsetPerInch = 0.0;
+
+        out[1] = (double) ticksPerInch;
+        out[2] = (double) ticksPerDeg;
 
         leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -137,14 +166,23 @@ public class AutoConfig {
         leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        int forwardTicks = (int)(ticksPerInch*forwardInch);
+        int forwardTicks = (int) (ticksPerInch*forwardInch);// + rightForwardOffsetPerInch*rightInch);
         int rotateTicks = (int)(ticksPerDeg*rotateDeg);
         int rightTicks = (int)(ticksPerInch*rightInch);
+
+        out[3] = (double) forwardTicks;
+        out[4] = (double) rightTicks;
+        out[5] = (double) rotateTicks;
 
         int leftFrontTicks = forwardTicks + rotateTicks - rightTicks; //forward + right + rotate;
         int leftBackTicks = forwardTicks - rotateTicks + rightTicks; //forward - right + rotate;
         int rightFrontTicks = forwardTicks + rotateTicks + rightTicks; //forward - right - rotate;
         int rightBackTicks = forwardTicks - rotateTicks - rightTicks; //forward + right - rotate;
+
+        out[6] = (double) leftFrontTicks;
+        out[7] = (double) leftBackTicks;
+        out[8] = (double) rightFrontTicks;
+        out[9] = (double) rightBackTicks;
 
         leftFrontDrive.setTargetPosition(leftFrontTicks);
         leftBackDrive.setTargetPosition(leftBackTicks);
@@ -165,11 +203,16 @@ public class AutoConfig {
                 (leftFrontDrive.isBusy() && leftBackDrive.isBusy()) && (rightFrontDrive.isBusy() && rightBackDrive.isBusy())) {
 
         }
+        out[10] = leftFrontDrive.getCurrentPosition();
+        out[11] = leftBackDrive.getCurrentPosition();
+        out[12] = rightFrontDrive.getCurrentPosition();
+        out[13] = rightBackDrive.getCurrentPosition();
         setDrive(0.0, 0.0, 0.0);
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        return out;
     }
 
     public void setDrive(double forward, double right, double rotate) {
@@ -227,11 +270,11 @@ public class AutoConfig {
         double maxRate = 1;
         double delta = sliderPositionMax-sliderPositionMin;
         double targetSliderPosition = sliderPositionMin;
-        //if (sliderPosition == 0) targetSliderPosition = SliderPositionMin;
+        if (sliderPosition == 0) targetSliderPosition = sliderPositionMin;
         if (sliderPosition == 1) targetSliderPosition = 1.85;//armPositionMin + 0.25*delta;
         if (sliderPosition == 2) targetSliderPosition = 1.2;//armPositionMin + 0.50*delta;
-        //if (sliderPosition == 3) targetSliderPosition = sliderPositionMin + 0.50*delta;
-        //if (sliderPosition == 4) targetSliderPosition = sliderPositionMin + 0.75*delta;
+        if (sliderPosition == 3) targetSliderPosition = 2.0;
+        if (sliderPosition == 4) targetSliderPosition = 2.;
         maxPower = (currentPosition > targetSliderPosition) ? 1 : 1;
         maxRate  = (currentPosition > targetSliderPosition) ? 0.2 : 0.1;
         double positionError = Math.abs((currentPosition-targetSliderPosition)*100/delta);
@@ -246,6 +289,10 @@ public class AutoConfig {
             //armSlider.setVelocity(maxRate);
             armSlider.setPower(sliderPower);
         }
+        //else {
+        //    sliderPower = 0.0;
+        //    armSlider.setPower(sliderPower);
+        //}
         return (sliderPower);
     }
 
@@ -280,6 +327,6 @@ public class AutoConfig {
         return leftWristServo.getDirection();
     }
     public double getPotAngle() {
-        return Range.scale(armPot.getVoltage(), 0, armPot.getMaxVoltage(), 0, 90);
+        return Range.scale(armPot0.getVoltage(), 0, armPot0.getMaxVoltage(), 0, 90);
     }
 }
