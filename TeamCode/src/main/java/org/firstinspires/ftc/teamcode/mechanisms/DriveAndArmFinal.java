@@ -109,7 +109,7 @@ public class DriveAndArmFinal {
         if (drive.armPot0.getVoltage() < 2.105) { // arm stright up limit (~80 deg)
         }*/
         double armPositionMin = 2.17;  // arm down
-        double armPositionMax = 2.095; // arm up
+        double armPositionMax = 2.095;  // arm up
         double maxLimit = Math.max(armPositionMin,armPositionMax);
         double minLimit = Math.min(armPositionMin,armPositionMax);
         double maxPower = 1.0;
