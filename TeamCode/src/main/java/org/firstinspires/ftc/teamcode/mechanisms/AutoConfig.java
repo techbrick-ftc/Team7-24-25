@@ -35,6 +35,8 @@ public class AutoConfig {
     public double clawPositionClosed = 0.83;//0.45;  // This is open position
     public double wristPositionMid = 0.5;
     public double wristPositionDown = 1;
+    public double wristPositionAuto2 = 0.7;
+    public double armPositionAutoSpecimen = 2.128;
     public ElapsedTime runtime = new ElapsedTime();
     public AnalogInput sliderPot2;
     /*public int armPosition0 = 0;
@@ -147,7 +149,10 @@ public class AutoConfig {
         double wheelDistanceFromCenter = 7.00;
         double ticksPerInch = ticksPerRotation/(wheelDiameterInch*Math.PI);
         double ticksPerDeg  = ticksPerInch*(wheelDistanceFromCenter*2.0*Math.PI)/360.0;
-        double driveSpeed = 0.1;
+        double driveSpeed = 0.3;
+        if (Math.abs(rightInch) > 24) {
+            driveSpeed = 0.3;
+        }
 
         double rightTicksPerInch = 36.14742015;  //overriding the wheel ticksPerInch
         double rightForwardOffsetPerInch = 0.0;  //31.62899263/12.0;
@@ -259,6 +264,43 @@ public class AutoConfig {
     public void setRotateSpeed(double speed) {
         double armRotateSpeedMax = 0.25;
         armRotate.setPower(speed * armRotateSpeedMax);
+    }
+
+    public double setArmPosition(int armPosition, double currentPosition) {
+       /* if (drive.armPot0.getVoltage() > 2.15) { // arm down limit (~0 deg)
+        }
+        if (drive.armPot0.getVoltage() < 2.105) { // arm stright up limit (~80 deg)
+        }*/
+        double armPositionMin = 2.17; // arm down
+        double armPositionMax = 2.095; // arm up
+        double maxLimit = Math.max(armPositionMin,armPositionMax);
+        double minLimit = Math.min(armPositionMin,armPositionMax);
+        double maxPower = 1.0;
+        double maxRate  = 1.0;
+        double delta = armPositionMax-armPositionMin;
+        double targetArmPosition = armPositionMin;
+        //if (armPosition == 0) targetArmPosition = armPositionMin;
+        if (armPosition == 1) targetArmPosition = 2.13; // start plan 1
+        if (armPosition == 2) targetArmPosition = 2.136; // end plan 1
+        if (armPosition == 3) targetArmPosition = 2.1585; // specimen grab plan 3
+        if (armPosition == 4) targetArmPosition = 2.129; // plan 2
+        if (armPosition == 5) targetArmPosition = 2.148; // after grab plan 3
+        if (armPosition == 6) targetArmPosition = 2.123; // clip plan 3
+        maxPower = (currentPosition > targetArmPosition) ? 1.0 : 1.0;
+        maxRate  = (currentPosition > targetArmPosition) ? 0.2 : 0.1;
+        // first number power for moving arm up (need more power)
+        // second number power for moving arm down (need less power) <-- gravity assist
+        double armPower =-maxPower*Math.tanh((currentPosition-targetArmPosition)*50/delta);
+        double positionError = Math.abs((currentPosition-targetArmPosition)*100/delta);
+        if (positionError < 2){
+            armRotate.setPower(0.0);
+            return(0.0);
+        }
+        if ((currentPosition < maxLimit) && (currentPosition > minLimit)) {
+            //armRotate.setVelocity(maxRate);
+            armRotate.setPower(armPower);
+        }
+        return (armPower);
     }
 
     public double setSliderPosition(int sliderPosition, double currentPosition) {

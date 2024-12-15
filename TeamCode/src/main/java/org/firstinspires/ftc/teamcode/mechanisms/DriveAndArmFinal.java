@@ -4,7 +4,8 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -20,8 +21,8 @@ public class DriveAndArmFinal {
     private DcMotor rightFrontDrive;
     private DcMotor rightBackDrive;
     private IMU imu;
-    public DcMotorEx armRotate;
-    public DcMotorEx armSlider;
+    public DcMotor armRotate;
+    public DcMotor armSlider;
     public DcMotor liftMotor;
     private Servo clawServo;
     private Servo rightWristServo;
@@ -30,6 +31,7 @@ public class DriveAndArmFinal {
     public AnalogInput armPot1;
     public AnalogInput sliderPot2;
     public AnalogInput sliderPot3;
+    public DigitalChannel liftLimitSwitch;
     private double ticksPerRotation;
     //private double ticksPerRotation1;
     //private double ticksPerRotation2;
@@ -57,8 +59,8 @@ public class DriveAndArmFinal {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
         //imu = hardwareMap.get(IMU.class, "imu");
-        armRotate = hardwareMap.get(DcMotorEx.class, "armRotate");
-        armSlider = hardwareMap.get(DcMotorEx.class, "armSlider");
+        armRotate = hardwareMap.get(DcMotor.class, "armRotate");
+        armSlider = hardwareMap.get(DcMotor.class, "armSlider");
         liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
         clawServo = hardwareMap.get(Servo.class, "clawServo");
         rightWristServo = hardwareMap.get(Servo.class, "rightWristServo");
@@ -67,6 +69,7 @@ public class DriveAndArmFinal {
         armPot1 = hardwareMap.get(AnalogInput.class, "armPot1");
         sliderPot2 = hardwareMap.get(AnalogInput.class, "sliderPot2");
         sliderPot3 = hardwareMap.get(AnalogInput.class, "sliderPot3");
+        liftLimitSwitch = hardwareMap.get(DigitalChannel.class, "liftLimitSwitch");
 
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -78,13 +81,15 @@ public class DriveAndArmFinal {
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftFrontDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        armRotate.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        armRotate.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        armRotate.setDirection(DcMotorEx.Direction.REVERSE);
-        armSlider.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        armSlider.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armRotate.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armRotate.setDirection(DcMotor.Direction.REVERSE);
+        armSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armSlider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+       //liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
         /*ticksPerRotation1 = armRotate.getMotorType().getTicksPerRev();

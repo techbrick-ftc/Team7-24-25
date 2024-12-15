@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes;
 
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -19,6 +19,8 @@ public class MainTeleOp  extends OpMode {
     boolean gp1aAlreadyPressed = false;
     boolean gp2xAlreadyPressed = false;
     boolean gp2yAlreadyPressed = false;
+    boolean gp2aAlreadyPressed = false;  //Slider Motor Manual/Limit Mode
+    boolean gp2bAlreadyPressed = false;  //Lift Motor Manual/Limit Mode
     boolean gp1dPadUpAlreadyPressed = false;
     boolean gp1dPadDownAlreadyPressed = false;
     boolean gp1dPadLeftAlreadyPressed = false;
@@ -35,12 +37,17 @@ public class MainTeleOp  extends OpMode {
     int sliderPosition = 0;
     boolean robotCentric = false;
     boolean slowMode = false;
+    boolean limitMode = false;
+    boolean liftMotorManual = false;
+    boolean lengthLimitReached = false;
+    boolean armRotationLimitReached = false;
     IMU imu;
-    public DcMotor liftMotor;
+    //public DcMotor liftMotor;
     public AnalogInput armPot0;
     public AnalogInput sliderPot2;
-    public DcMotorEx armRotate;
-    public DcMotorEx armSlider;
+    public DcMotor armRotate;
+    public DcMotor armSlider;
+    private double offSetAngle;
 
     public void init() {
 
@@ -48,7 +55,14 @@ public class MainTeleOp  extends OpMode {
         robotCentric = false;
 
         imu = hardwareMap.get(IMU.class, "imu");
-        liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
+        //liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
+        //liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armSlider = hardwareMap.get(DcMotor.class, "armSlider");
+        armSlider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armSlider.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+
         //RevHubOrientationOnRobot revHubOrientationOnRobot = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,RevHubOrientationOnRobot.UsbFacingDirection.LEFT);
 
         //imu.initialize(new IMU.Parameters(revHubOrientationOnRobot));
@@ -148,6 +162,23 @@ public class MainTeleOp  extends OpMode {
         gp2dPadLeftAlreadyPressed = gamepad2.dpad_left;
     }
 
+    private void checkLiftMotorMode() {
+        telemetry.addData("Lift Motor Mode: Manual", liftMotorManual);
+        if (gamepad2.b && !gp2bAlreadyPressed) {
+            liftMotorManual = !liftMotorManual;
+        }else if (gamepad2.a && gamepad2.b) {
+            drive.liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            drive.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+        gp2bAlreadyPressed = gamepad2.b;
+    }
+
+    private void checkLimitMode() {
+        telemetry.addData("Limit MOde ",limitMode);
+        if (gamepad2.a && gp2aAlreadyPressed) limitMode = !limitMode;
+        gp2aAlreadyPressed = gamepad2.a;
+    }
+
     private void checkDriveMode() {
         telemetry.addData("Robot centric", robotCentric);
         if(gamepad1.y && !gp1yAlreadyPressed) robotCentric = !robotCentric;
@@ -184,7 +215,7 @@ public class MainTeleOp  extends OpMode {
         double theta = Math.atan2(forward, right);
         double r = Math.hypot(forward, right);
         //rotate angle
-        theta = AngleUnit.normalizeRadians(theta + robotAngle);
+        theta = AngleUnit.normalizeRadians(theta + robotAngle - offSetAngle);
 
         //convert back to cartesian
         double newForward = r * Math.sin(theta);
@@ -201,14 +232,85 @@ public class MainTeleOp  extends OpMode {
         gp1aAlreadyPressed = gamepad1.a;
     }
 
-    /*public void lengthLimitCommands() {
-        double currentArmPosition = armRotate.getCurrentPosition();
-        if ((currentArmPosition >= 2.134) && (armSlider.getCurrentPosition() >= 1.173)) {
-            drive.setArmPosition(1, currentArmPosition);
-            armRotate.setPower(0.0);
-            armSlider.setPower(0.0);
+    public double checkLiftMotorLimit() {
+        int currentLiftPosition = drive.liftMotor.getCurrentPosition();
+        int liftMotorUpperLimit = -12589;
+        int liftMotorLowerLimit = 0;
+        double power = 0.0;
+        //gamepad2.left_bumper --> go down
+        //gamepad2.right_bumper --> go up
+        if (false) {//(!drive.liftLimitSwitch.getState()) { //liftLImitSwitch is pressed
+            power = 0.0;
+            drive.liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        }else if ((gamepad2.left_bumper) && (currentLiftPosition < liftMotorLowerLimit)){ // go down
+            power = (currentLiftPosition > liftMotorLowerLimit-500) ? 0.1 : 1.0;
+            //power = 1;
+        }else if ((gamepad2.right_bumper ) && (currentLiftPosition > liftMotorUpperLimit)) { // lift up
+            power = (currentLiftPosition < 0.95*liftMotorUpperLimit) ? -0.1 : -1.0;
+            //power = -1;
+        }else {
+            power = 0.0;
         }
-    }*/
+        drive.liftMotor.setPower(power);
+        return power;
+    }
+
+    public int checkLimit() {
+        boolean lengthLimit = false;
+        int armLimit;
+        double armPositionDown = 2.167; // arm down
+        double armPosition0    = 2.128; // arm at 55 Deg
+        double armPositionUp   = 2.114; // arm up (80 Deg.) --> starting hitting lift structure
+        int    sliderPositionOut = -10720; //slider out limit at 55 Deg (and over)
+        int    sliderPosition0 = -5082;    //slider out limit at 0 Deg;
+        int    sliderLimit;
+        int    sliderPositionIn  = 0;     // slider in (reset everytime rotor starts)
+        double currentArmPosition = drive.armPot0.getVoltage();
+        int currentSliderPosition = armSlider.getCurrentPosition();
+        armLimit = 0;
+        if (currentArmPosition <= armPosition0) { // When arm is greater than 55 Deg.
+            sliderLimit = sliderPositionOut;
+        } else {
+            double armAngle0 = Math.acos((double) sliderPosition0 /sliderPositionOut); //in Rad.
+            double currentArmAngle = (currentArmPosition-armPositionDown)*armAngle0/(armPosition0-armPositionDown);        //in Rad.
+            sliderLimit = (int) (sliderPosition0/Math.cos(currentArmAngle));
+            //telemetry.addData("Arm Angle 0:", armAngle0*180.0/Math.PI);
+            //telemetry.addData("Current Arm Angle:", currentArmAngle*180.0/Math.PI);
+            //telemetry.addData("currentArmPosition:", currentArmPosition);
+            //telemetry.addData("Slider Limit:", sliderLimit);
+        }
+        if  (currentSliderPosition <= sliderLimit) {
+            lengthLimit = true;
+        } else if (currentArmPosition <= armPositionUp) {
+            armLimit    = 1;
+        }else if (currentArmPosition >=armPositionDown) {
+            armLimit    = -1;
+        } else if ((currentSliderPosition <= sliderPositionOut) ) {
+            lengthLimit = true;
+        }else
+            lengthLimit = false;
+        lengthLimitReached = lengthLimit;
+        armRotationLimitReached = (armLimit == 0) ? false : true;
+        //telemetry.addData("CurrentArmPosition:", currentArmPosition);
+        //telemetry.addData("CurrentSliderPosition:", currentSliderPosition);
+        //telemetry.addData("Slider Limit:", sliderLimit);
+        //telemetry.addData("length Limit:", lengthLimit);
+        //telemetry.addData("Length Limit Reached:", lengthLimitReached);
+        if (lengthLimitReached) {
+            drive.armRotate.setPower(0.0);
+            drive.armSlider.setPower(0.0);
+        } else if (armRotationLimitReached) {
+            drive.armRotate.setPower(0.0);
+        }
+        return armLimit;
+    }
+
+    public boolean rotateLimitCommand() {
+        if ((armSlider.getCurrentPosition() <= -4304) && drive.armPot0.getVoltage() <= 2.129) {
+            return false;
+        }
+        return true;
+    }
 
     @Override
     public void loop() {
@@ -217,29 +319,63 @@ public class MainTeleOp  extends OpMode {
         double rotate = gamepad1.right_stick_x;
         double slider = gamepad2.left_stick_y;
         double armRotate = -gamepad2.right_stick_y;
+        double liftMotorPower = 0;
 
-        if (gamepad2.left_bumper) { // go down
-            liftMotor.setPower(1);
+
+//        if (gamepad2.left_bumper || gamepad2.right_bumper) {
+//            double liftMotorPower = checkLiftMotorLimit();
+//        }
+        if (liftMotorManual) {
+            if (gamepad2.left_bumper) { // go down
+                drive.liftMotor.setPower(1); liftMotorPower = 1;
+            } else if (gamepad2.right_bumper) { // lift up
+                drive.liftMotor.setPower(-1); liftMotorPower = -1;
+            } else {
+                drive.liftMotor.setPower(0); liftMotorPower = 0;
+            }
+        }else {
+            liftMotorPower = checkLiftMotorLimit();
         }
-
-        else if (gamepad2.right_bumper) { // lift up
-            liftMotor.setPower(-1);
+        if (gamepad1.b) {
+            offSetAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);;
         }
-
-        else {
-            liftMotor.setPower(0);
-        }
-
-        checkSliderMode();
+        checkLiftMotorMode();
+        checkLimitMode();     //checking if limit mode is on/off
+        checkSliderMode();    //checking if slider mode is manual/auto (goto position)
+        checkArmMode();       //checking if arm mode is manual/auto (goto position)
         if (sliderManual) {
-            sliderPower = drive.setSliderSpeed(slider);
-        }
-        else
+            if (limitMode) {
+                checkLimit();//checkLengthLimit();
+                if (!lengthLimitReached || slider >= 0 ) {//|| slider > 0) {
+                    double currentArmPosition = drive.armPot0.getVoltage();
+                    int currentSliderPosition = armSlider.getCurrentPosition();
+                    //telemetry.addData("Slider Input:", slider);
+                    //telemetry.addData("CurrentArmPosition:", currentArmPosition);
+                    //telemetry.addData("CurrentSliderPosition:", currentSliderPosition);
+                    //telemetry.addData("Length Limit Reached:", lengthLimitReached);
+                    sliderPower = drive.setSliderSpeed(slider);
+                }
+            } else
+                sliderPower = drive.setSliderSpeed(slider);
+        } else
             checkSliderPosition();
-
-        checkArmMode();//armManual = armRotate != 0.0;
-        if (armManual) {
-            armPower = drive.setRotateSpeed(armRotate);
+        //checkArmMode();//armManual = armRotate != 0.0;
+        if (armManual) {// && (rotateLimitCommand() || armRotate < 0)) {
+            if (limitMode) {
+                double armLimit = checkLimit()*armRotate;
+                if ((!armRotationLimitReached || armLimit< 0) && (!lengthLimitReached || armRotate > 0 ))  {
+                    double currentArmPosition = drive.armPot0.getVoltage();
+                    int currentSliderPosition = armSlider.getCurrentPosition();
+                    telemetry.addData("arm Input:", armRotate);
+                    telemetry.addData("CurrentArmPosition:", currentArmPosition);
+                    telemetry.addData("CurrentSliderPosition:", currentSliderPosition);
+                    telemetry.addData("Length Limit Reached:", lengthLimitReached);
+                    telemetry.addData("Arm Rotation Limit Reached:", armRotationLimitReached);
+                    armPower = drive.setRotateSpeed(armRotate);
+                }
+            }
+            else
+                armPower = drive.setRotateSpeed(armRotate);
         }
         else
             checkArmPosition();
@@ -259,6 +395,7 @@ public class MainTeleOp  extends OpMode {
         telemetry.addData("Left stick y gp1", gamepad1.left_stick_y);
         telemetry.addData("Left stick y gp2", gamepad2.left_stick_y);
         telemetry.addData("Left trigger gp2", gamepad2.left_trigger);*/
+        telemetry.addData("Slider position", armSlider.getCurrentPosition());
         telemetry.addData("Robot centric", robotCentric);
         telemetry.addData("Wrist up", wristUp);
         telemetry.addData("Claw open", clawOpen);
@@ -274,6 +411,10 @@ public class MainTeleOp  extends OpMode {
         telemetry.addData("Arm pot 0 Angle", drive.armPot0.getVoltage());
         //telemetry.addData("Arm pot 1 Angle", drive.armPot1.getVoltage());
         telemetry.addData("Slider pot Angle 2", drive.sliderPot2.getVoltage());
+        telemetry.addData("Lift Motor Manual Mode",liftMotorManual);
+        telemetry.addData("Lift Limit Switch Button", drive.liftLimitSwitch.getState());
+        telemetry.addData("Lift Motor Position", drive.liftMotor.getCurrentPosition());
+        telemetry.addData("Lift Motor Power",liftMotorPower);
         //telemetry.addData("Slider pot Angle 3", drive.sliderPot3.getVoltage());
 
         if (robotCentric) {
