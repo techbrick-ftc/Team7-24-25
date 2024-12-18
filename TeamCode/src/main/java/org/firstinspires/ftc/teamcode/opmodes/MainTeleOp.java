@@ -234,7 +234,7 @@ public class MainTeleOp  extends OpMode {
         if (digitalTouch.getState() == false) {
             telemetry.addData("Touch Sensor", "PRESSED");
             liftMotor.setPower(0);
-            telemetry.update
+            telemetry.update();
         }
 
         if (gamepad2.left_bumper) { // go down
