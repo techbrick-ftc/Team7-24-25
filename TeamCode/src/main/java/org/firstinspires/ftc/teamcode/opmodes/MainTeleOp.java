@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -41,6 +42,7 @@ public class MainTeleOp  extends OpMode {
     public AnalogInput sliderPot2;
     public DcMotorEx armRotate;
     public DcMotorEx armSlider;
+    public DigitalChannel digitalTouch;
 
     public void init() {
 
@@ -226,6 +228,13 @@ public class MainTeleOp  extends OpMode {
         double rotate = gamepad1.right_stick_x;
         double slider = gamepad2.left_stick_y;
         double armRotate = -gamepad2.right_stick_y;
+
+
+
+        if (digitalTouch.getState() == false) {
+            telemetry.addData("Touch Sensor", "PRESSED");
+            liftMotor.setPower(0);
+        }
 
         if (gamepad2.left_bumper) { // go down
             liftMotor.setPower(1);
