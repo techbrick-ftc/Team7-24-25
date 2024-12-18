@@ -5,10 +5,12 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -20,6 +22,7 @@ public class AutoConfig {
     private DcMotor rightFrontDrive;
     private DcMotor rightBackDrive;
     private IMU imu;
+    public TouchSensor touchSensor;
     public DcMotorEx armRotate;
     public DcMotorEx armSlider;
     public DcMotor liftMotor;
@@ -62,6 +65,7 @@ public class AutoConfig {
         armSlider = hardwareMap.get(DcMotorEx.class, "armSlider");
         liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
         clawServo = hardwareMap.get(Servo.class, "clawServo");
+        touchSensor = hardwareMap.touchSensor.get("touch_sensor");
         rightWristServo = hardwareMap.get(Servo.class, "rightWristServo");
         leftWristServo = hardwareMap.get(Servo.class, "leftWristServo");
         armPot0 = hardwareMap.get(AnalogInput.class, "armPot0");
@@ -84,6 +88,7 @@ public class AutoConfig {
         armSlider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armRotate.setDirection(DcMotorSimple.Direction.REVERSE);
+        touchSensor.getConnectionInfo();
 
         /*ticksPerRotation1 = armRotate.getMotorType().getTicksPerRev();
         ticksPerRotation2 = armSlider.getMotorType().getTicksPerRev();
@@ -370,5 +375,9 @@ public class AutoConfig {
     }
     public double getPotAngle() {
         return Range.scale(armPot0.getVoltage(), 0, armPot0.getMaxVoltage(), 0, 90);
+    }
+
+    public void armSlider(int currentPosition) {
+
     }
 }

@@ -4,12 +4,13 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -21,17 +22,17 @@ public class DriveAndArmFinal {
     private DcMotor rightFrontDrive;
     private DcMotor rightBackDrive;
     private IMU imu;
-    public DcMotor armRotate;
-    public DcMotor armSlider;
+    public DcMotorEx armRotate;
+    public DcMotorEx armSlider;
     public DcMotor liftMotor;
     private Servo clawServo;
+    public DigitalChannel digitalTouch;
     private Servo rightWristServo;
     private Servo leftWristServo;
     public AnalogInput armPot0;
     public AnalogInput armPot1;
     public AnalogInput sliderPot2;
     public AnalogInput sliderPot3;
-    public DigitalChannel liftLimitSwitch;
     private double ticksPerRotation;
     //private double ticksPerRotation1;
     //private double ticksPerRotation2;
@@ -59,9 +60,12 @@ public class DriveAndArmFinal {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
         //imu = hardwareMap.get(IMU.class, "imu");
-        armRotate = hardwareMap.get(DcMotor.class, "armRotate");
-        armSlider = hardwareMap.get(DcMotor.class, "armSlider");
+        armRotate = hardwareMap.get(DcMotorEx.class, "armRotate");
+        armSlider = hardwareMap.get(DcMotorEx.class, "armSlider");
+//        int desiredPosition = 1000; // The position (in ticks) that you want the motor to move to                                      //CODE 12-5-24
+//        armSlider.setTargetPosition(desiredPosition); // Tells the motor that the position it should go to is desiredPosition        //CODE 12-5-24
         liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "digitalTouch");
         clawServo = hardwareMap.get(Servo.class, "clawServo");
         rightWristServo = hardwareMap.get(Servo.class, "rightWristServo");
         leftWristServo = hardwareMap.get(Servo.class, "leftWristServo");
@@ -69,7 +73,6 @@ public class DriveAndArmFinal {
         armPot1 = hardwareMap.get(AnalogInput.class, "armPot1");
         sliderPot2 = hardwareMap.get(AnalogInput.class, "sliderPot2");
         sliderPot3 = hardwareMap.get(AnalogInput.class, "sliderPot3");
-        liftLimitSwitch = hardwareMap.get(DigitalChannel.class, "liftLimitSwitch");
 
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -81,15 +84,14 @@ public class DriveAndArmFinal {
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftFrontDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        armRotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armRotate.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        armRotate.setDirection(DcMotor.Direction.REVERSE);
-        armSlider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        armSlider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-       //liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armRotate.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        armRotate.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        armRotate.setDirection(DcMotorEx.Direction.REVERSE);
+        armSlider.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        armSlider.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         liftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
 
         /*ticksPerRotation1 = armRotate.getMotorType().getTicksPerRev();
@@ -108,8 +110,8 @@ public class DriveAndArmFinal {
         }
         if (drive.armPot0.getVoltage() < 2.105) { // arm stright up limit (~80 deg)
         }*/
-        double armPositionMin = 2.17;  // arm down
-        double armPositionMax = 2.095;  // arm up
+        double armPositionMin = 2.168; // arm up
+        double armPositionMax = 2.095; // arm down
         double maxLimit = Math.max(armPositionMin,armPositionMax);
         double minLimit = Math.min(armPositionMin,armPositionMax);
         double maxPower = 1.0;
@@ -234,6 +236,8 @@ public class DriveAndArmFinal {
     public void setLeftWristServoPosition(double position) {
         leftWristServo.setPosition(position);
     }
+
+    public double getSliderPosition() { return getSliderPosition(); }
 
     public double getRightWristServoPosition() {
         return rightWristServo.getPosition();
