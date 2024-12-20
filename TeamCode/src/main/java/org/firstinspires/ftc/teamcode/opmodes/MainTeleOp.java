@@ -48,7 +48,6 @@ public class MainTeleOp  extends OpMode {
 
         drive.init(hardwareMap);
         robotCentric = false;
-
         imu = hardwareMap.get(IMU.class, "imu");
         liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
         //RevHubOrientationOnRobot revHubOrientationOnRobot = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,RevHubOrientationOnRobot.UsbFacingDirection.LEFT);
